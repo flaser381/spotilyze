@@ -1,0 +1,10 @@
+{
+  "name": "@spotilyze/core",
+  "version": "0.0.0",
+  "type": "module",
+  "module": "src/index.ts",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
