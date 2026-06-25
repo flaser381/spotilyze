@@ -1,0 +1,26 @@
+# deps / build output
+node_modules/
+dist/
+apps/web/dist/
+.vite/
+out/
+*.log
+.DS_Store
+
+# local config + secrets
+.env
+.env.*
+.claude/
+.config/
+config/
+
+# data: ONLY the shipped DB is ever tracked — nothing else in data/ leaves this machine
+data/*
+!data/spotilyze.sqlite3
+
+# dataset build / scrape / research tooling — never committed
+scripts/
+exp-*.ts
+
+# exported single-file profiles
+spotilyze-profile*.html

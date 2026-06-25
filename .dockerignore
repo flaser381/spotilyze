@@ -1,0 +1,27 @@
+# keep the build context small + avoid leaking local state/secrets into the image
+.git
+node_modules
+**/node_modules
+apps/web/dist
+**/dist
+.vite
+
+# local runtime state (mounted as volumes instead)
+cache
+config
+*.log
+
+# exported single-file profiles
+spotilyze-profile*.html
+
+# large / copyrighted source datasets (not needed at runtime)
+data/muse_v3.csv
+data/*.pdf
+
+# misc
+.DS_Store
+.env
+.env.*
+!.env.example
+.claude
+out

@@ -1,0 +1,26 @@
+services:
+  spotilyze:
+    build: .
+    image: spotilyze:latest
+    container_name: spotilyze
+    ports:
+      - "3001:3001"
+    # makes the host reachable as host.docker.internal (needed for a host-run Ollama /
+    # LM Studio). Required on Linux; harmless on Docker Desktop. The server auto-rewrites
+    # a localhost LLM base URL to host.docker.internal inside the container.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # persist the resolved artist→genre cache and the UI-managed config (API keys)
+      - ./cache:/app/cache
+      - ./config:/app/config
+    environment:
+      - PORT=3001
+      # Optional: pre-seed keys instead of using the in-app setup screen.
+      # (The setup screen writes these into ./config and they persist via the volume.)
+      # - LASTFM_API_KEY=
+      # - LLM_PROVIDER=openai        # openai | anthropic | ollama
+      # - LLM_MODEL=gpt-4o-mini
+      # - LLM_API_KEY=
+      # - LLM_BASE_URL=
+    restart: unless-stopped
