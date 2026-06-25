@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import banner from "../assets/banner.png";
+
 defineEmits<{ continue: [] }>();
 
 const svg = (p: string) =>
@@ -27,8 +29,8 @@ const pillars = [
     <div class="inner">
       <!-- hero -->
       <header class="hero">
-        <div class="logo">◈</div>
-        <h1>Spotilyze</h1>
+        <img class="banner" :src="banner" alt="Spotilyze — see what your music says about you" />
+        <h1 class="sr-only">Spotilyze</h1>
         <p class="tag">
           Turn your Spotify history into a portrait of who you are, who you were, and how your taste changed —
           built entirely on <strong>your own</strong> machine, with the code fully open.
@@ -105,8 +107,8 @@ const pillars = [
 .ico.accent { color: var(--accent); }
 
 .hero { text-align: center; }
-.logo { color: var(--accent); font-size: 40px; }
-.hero h1 { font-size: 40px; letter-spacing: -0.5px; margin-top: 4px; }
+.banner { width: min(440px, 82%); height: auto; display: block; margin: 0 auto; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .tag { max-width: 560px; margin: 14px auto 0; line-height: 1.6; color: var(--muted); font-size: 15px; }
 .tag strong { color: var(--text); }
 .cta { display: flex; gap: 12px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
