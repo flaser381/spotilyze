@@ -39,6 +39,16 @@ const median = (xs: number[]): number => {
 };
 const level = (x: number, base: number): Level => (x > base * 1.4 ? "high" : x < base * 0.66 ? "low" : "mid");
 
+/** Mean AVD over (non-gap) signal weeks — genre-derived, matching the detector & graph lines. */
+const meanAVD = (sigs: SignalVector[]): AVD =>
+  sigs.length
+    ? {
+        a: sigs.reduce((s, x) => s + x.avd.a, 0) / sigs.length,
+        v: sigs.reduce((s, x) => s + x.avd.v, 0) / sigs.length,
+        d: sigs.reduce((s, x) => s + x.avd.d, 0) / sigs.length,
+      }
+    : { a: 0.5, v: 0.5, d: 0.5 };
+
 function explainBoundaries(
   M: number[][],
   times: number[],
@@ -104,7 +114,7 @@ export function detectLifePhases(
   // baselines for levels + label
   const valid = signals.filter((s) => !s.gap);
   const base = {
-    avd: avdCoverage(plays, amap, table).mean ?? { a: 0.5, v: 0.5, d: 0.5 },
+    avd: meanAVD(valid), // genre-derived baseline (matches phase centroids below)
     vol: median(valid.map((s) => s.nPlays)),
     rep: median(valid.map((s) => s.replay)),
     ent: median(valid.map((s) => s.entropy)),
@@ -134,8 +144,8 @@ function characterize(
   ctx: { startTs: number; endTs: number; base: { avd: AVD; vol: number; rep: number; ent: number } },
 ): Phase {
   const w = computeWidgets(segPlays, amap, table, { topN: 12 });
-  const centroid = w.avdOverall;
   const real = segSignals.filter((s) => !s.gap);
+  const centroid = meanAVD(real); // genre-derived — same signal the detector & graph lines use
   const sd = (sel: (s: SignalVector) => number, m: number) =>
     real.length ? Math.sqrt(real.reduce((acc, s) => acc + (sel(s) - m) ** 2, 0) / real.length) : 0;
   const spread: AVD = {
