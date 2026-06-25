@@ -52,7 +52,7 @@ const option = computed(() => {
     showSymbol: false,
     smooth: true,
     connectNulls: true,
-    lineStyle: { width: faint ? 1 : 1.7, color, opacity: (faint ? 0.45 : 1) * (dim ? 0.12 : 1) },
+    lineStyle: { width: faint ? 1 : 1.7, color, opacity: (faint ? 0.45 : 1) * (dim ? 0.45 : 1) },
     areaStyle: faint ? { color, opacity: dim ? 0.015 : 0.08 } : undefined,
     itemStyle: { color },
     data: v.map((y, i) => [t[i], y == null ? null : Number(y.toFixed(3))]),
@@ -79,7 +79,7 @@ const option = computed(() => {
   const bandColor = (i: number) =>
     sel == null
       ? i % 2 ? "rgba(255,255,255,0.035)" : "rgba(124,92,255,0.06)"
-      : i === sel ? "rgba(124,92,255,0.16)" : "transparent";
+      : i === sel ? "rgba(124,92,255,0.16)" : i % 2 ? "rgba(255,255,255,0.025)" : "rgba(124,92,255,0.05)";
   const markArea = {
     silent: true,
     data: phases.value.map((p, i) => [{ xAxis: p.start, itemStyle: { color: bandColor(i) } }, { xAxis: p.end }]),
