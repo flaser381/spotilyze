@@ -15,10 +15,10 @@ const icons = {
   github: svg('<path d="M9 19c-4 1.5-4-2-6-2.5M15 21v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.3 4.3 0 0 0-.1-3.2s-1-.3-3.4 1.3a11.5 11.5 0 0 0-6 0C8.3 2.1 7.3 2.4 7.3 2.4a4.3 4.3 0 0 0-.1 3.2A4.6 4.6 0 0 0 6 8.8c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/>'),
 };
 const pillars = [
-  { icon: "eye", title: "Reclaim the lens", body: "The same profiling tools Big Tech runs on you, quietly, for ads — pointed at your own data, by you, on your own machine." },
-  { icon: "spark", title: "Make the invisible visible", body: "Innocuous data reveals far more than you'd expect. See for yourself what your listening history can infer about you." },
+  { icon: "eye", title: "Your sound profile", body: "An Arousal–Valence–Depth signature drawn from years of real listening — the shape of your taste, not just your top artists." },
+  { icon: "spark", title: "Deeper than a yearly recap", body: "Goes past the year-end slideshow: the patterns, moods and turning points across your whole history." },
   { icon: "clock", title: "A mirror for your story", body: "Your phases, turning points and growth over the years — a way to look back at who you were and how you changed." },
-  { icon: "flask", title: "An open question, not a claim", body: "We're openly exploring whether this long-term signal could one day aid mental-health self-reflection or research — transparently, never as a diagnosis." },
+  { icon: "flask", title: "An open question, not a claim", body: "We're exploring, transparently, whether this long-term signal could one day support self-reflection or research — never a diagnosis." },
 ];
 </script>
 
@@ -30,8 +30,8 @@ const pillars = [
         <div class="logo">◈</div>
         <h1>Spotilyze</h1>
         <p class="tag">
-          Big platforms profile you from data you'd never expect to be revealing. Spotilyze lets you run that same lens on
-          <strong>your own</strong> listening history — privately, on your own machine, with the code fully open.
+          Turn your Spotify history into a portrait of who you are, who you were, and how your taste changed —
+          built entirely on <strong>your own</strong> machine, with the code fully open.
         </p>
         <div class="cta">
           <button class="btn" @click="$emit('continue')">Get started</button>
@@ -42,11 +42,10 @@ const pillars = [
 
       <!-- why this exists -->
       <section class="why">
-        <h2>Why this exists</h2>
+        <h2>What it shows you</h2>
         <p class="wlead">
-          Profiling people from passive data isn't science fiction. It's the quiet core of the ad economy, done <em>on</em> you,
-          <em>for</em> advertisers, behind closed doors. That power shouldn't belong only to big companies. Spotilyze flips it:
-          you point it at yourself and see exactly what's inferable.
+          Years of listening hold a surprisingly rich picture of you — your moods, your phases, how your taste has shifted over
+          time. Spotilyze draws that picture out and keeps it entirely in your hands.
         </p>
         <div class="grid">
           <div v-for="p in pillars" :key="p.title" class="why-card">
