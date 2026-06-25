@@ -1,0 +1,128 @@
+:root {
+  --bg: #0a0c12;
+  --bg2: #0e111a;
+  --card: #141826;
+  --card2: #1a1f30;
+  --border: #232a3d;
+  --text: #e7eaf2;
+  --muted: #8b93a8;
+  --accent: #7c5cff;
+  --a: #ff6b6b;
+  --v: #1ed793;
+  --d: #5c8cff;
+  --radius: 16px;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { height: 100%; margin: 0; }
+html { background: var(--bg); }
+body {
+  background: transparent;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fixed, blurred aurora pinned to the viewport — never tiles/seams on scroll.
+   Big inset + heavy blur so the drift/rotate never reveals an edge. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -40%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 42% at 18% 22%, rgba(124, 92, 255, 0.32) 0%, transparent 70%),
+    radial-gradient(34% 44% at 82% 16%, rgba(34, 200, 196, 0.24) 0%, transparent 70%),
+    radial-gradient(44% 42% at 72% 82%, rgba(92, 140, 255, 0.26) 0%, transparent 70%),
+    radial-gradient(40% 40% at 24% 84%, rgba(255, 92, 157, 0.20) 0%, transparent 70%),
+    radial-gradient(50% 50% at 50% 50%, rgba(170, 90, 255, 0.10) 0%, transparent 75%);
+  background-color: var(--bg);
+  filter: blur(80px) saturate(1.05);
+  animation: aurora 34s ease-in-out infinite alternate;
+}
+@keyframes aurora {
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg) scale(1.08); }
+  50%  { transform: translate3d(2.5%, -2%, 0) rotate(4deg) scale(1.18); }
+  100% { transform: translate3d(-2%, 2.5%, 0) rotate(-3deg) scale(1.14); }
+}
+
+/* Faint film grain — kills banding in the gradients, adds texture. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; }
+}
+
+h1, h2, h3 { margin: 0; font-weight: 650; }
+a { color: var(--accent); }
+
+.btn {
+  background: var(--accent);
+  color: white; border: none; border-radius: 10px;
+  padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: filter .15s, transform .05s;
+}
+.btn:hover { filter: brightness(1.1); }
+.btn:active { transform: translateY(1px); }
+.btn.ghost { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+
+.muted { color: var(--muted); }
+
+/* dashboard grid */
+.dash { max-width: 1320px; margin: 0 auto; padding: 22px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+}
+.card {
+  background: linear-gradient(180deg, var(--card) 0%, var(--bg2) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 16px 12px;
+  display: flex; flex-direction: column;
+  min-width: 0;
+}
+.card h3 { font-size: 13px; letter-spacing: .3px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.card .body { flex: 1; min-height: 0; }
+.chart { width: 100%; height: 100%; min-height: 200px; }
+
+/* spans */
+.s3 { grid-column: span 3; } .s4 { grid-column: span 4; } .s5 { grid-column: span 5; }
+.s6 { grid-column: span 6; } .s7 { grid-column: span 7; } .s8 { grid-column: span 8; }
+.s12 { grid-column: span 12; }
+@media (max-width: 980px) { .grid > * { grid-column: span 12 !important; } }
+
+/* lists */
+.rows { display: flex; flex-direction: column; gap: 7px; }
+.row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.row .rank { color: var(--muted); width: 18px; text-align: right; font-variant-numeric: tabular-nums; }
+.row .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .val { color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { height: 6px; border-radius: 4px; background: var(--accent); opacity: .85; }
+
+/* stat tiles */
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.stat .k { font-size: 12px; color: var(--muted); }
+.stat .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ── small screens / phones ─────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .dash { padding: 14px 11px; }
+  .grid { gap: 12px; }
+  .card { padding: 14px 13px 11px; }
+  .btn { padding: 8px 13px; font-size: 13px; }
+  .btn.ghost { padding: 8px 12px; }
+  .stats { gap: 10px; }
+  .stat .v { font-size: 20px; }
+  h1 { font-size: 26px; }
+}
