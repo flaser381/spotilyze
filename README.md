@@ -17,7 +17,7 @@ A local-first tool that turns your Spotify history into a sound-profile, a timel
 
 ## Built with AI
 
-> **Heads-up, up front:** Spotilyze is a hobby project built with heavy use of **Claude (Anthropic)**: most of the implementation, much of the copy, and this README. The architecture and design choices, the methodology, the dataset curation, and the review are mine; a large share of the code itself is AI-assisted. Read it as exactly that: an open, AI-built side project, not production software vetted by a team. The source is all here, so inspect it, don't trust it blindly.
+> **Heads-up, up front:** Spotilyze is a hobby project built with the use of AI: most of the implementation, much of the copy, and this README. The architecture and design choices, the methodology, the dataset curation, and the review were processed by a human brain (me); Read it as exactly that: an open, AI-assisted side project, not production software vetted by a team.
 
 ---
 
