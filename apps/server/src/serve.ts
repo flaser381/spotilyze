@@ -23,6 +23,7 @@ import {
   type PodcastPlay,
   type ProfileCards,
   type RawPlay,
+  type SignalVector,
   type SkipEvent,
 } from "@spotilyze/core";
 import { unzipSync } from "fflate";
@@ -31,7 +32,7 @@ import { statfsSync } from "node:fs";
 import { openAvdDb, resolveAvd } from "./avddb";
 import { loadGenreAvd } from "./genredb";
 import { openTagsDb, tagsFor, tagsReady } from "./tagsdb";
-import type { ArtistGenreMap } from "@spotilyze/core";
+import type { ArtistGenreMap, ArtistGenres } from "@spotilyze/core";
 import { buildExportHtml } from "./export";
 import { llmChat, llmConfig, type LLMSettings } from "./llm";
 import { getSettings, loadSettings, saveSettings } from "./settings";
@@ -54,16 +55,25 @@ const avdReady = openAvdDb(DB);
 // tail, 87% play-weighted coverage). tagsFor returns a bare WeightedGenre[]; downstream
 // expects ArtistGenres ({ genres }), so wrap it.
 const tagsLoaded = openTagsDb(DB);
+// Wrapper memo: return the SAME ArtistGenres object per artist across accesses, so a
+// timeframe/k recompute over 100k+ plays does O(1) map hits instead of re-wrapping
+// (tagsFor itself is memoized too). `null` marks a known miss → undefined to the caller.
+const amapCache = new Map<string, ArtistGenres | null>();
 const genreAmap: ArtistGenreMap = new Proxy({} as ArtistGenreMap, {
   get: (_t, k) => {
     if (typeof k !== "string") return undefined;
-    const tg = tagsFor(k);
-    return tg ? { genres: tg } : undefined;
+    let v = amapCache.get(k);
+    if (v === undefined) {
+      const tg = tagsFor(k);
+      amapCache.set(k, (v = tg ? { genres: tg } : null));
+    }
+    return v ?? undefined;
   },
 });
 
 // single-user session state (local-first): the resolved plays of the last upload
 let sessionPlays: Play[] = [];
+let sessionSignals: SignalVector[] = []; // all-time weekly signals — k-independent, so cache for fast k re-tuning
 let sessionSkips: SkipEvent[] = []; // fast forward-button skips (for the outgrown detector)
 let sessionPodcasts: PodcastPlay[] = []; // podcast/audiobook episodes
 let sessionUsePodcasts = false; // user opt-in: feed podcasts into Wrapped + LLM report
@@ -263,6 +273,7 @@ Bun.serve({
             await send({ type: "log", stage: "phases", msg: `Detected ${result.phases.length} life-phases across ${result.boundaries.length} behavioural shifts (auto k=${tuned.k})` });
 
             sessionPlays = plays;
+            sessionSignals = result.signals; // cache all-time signals (k-independent) for fast phase re-tuning
             sessionSkips = skips;
             sessionPodcasts = podcasts;
             sessionUsePodcasts = usePodcasts;
@@ -296,7 +307,8 @@ Bun.serve({
     // auto=1 → sweep k and pick the one yielding ~0.8 detected events per listening year.
     if (url.pathname === "/api/phases" && req.method === "GET") {
       if (sessionPlays.length === 0) return json({ error: "no session; upload first" }, 409);
-      const signals = computeSignals(sessionPlays, genreAmap, table);
+      // signals are k-independent → reuse the cached all-time set (recompute only if missing)
+      const signals = sessionSignals.length ? sessionSignals : computeSignals(sessionPlays, genreAmap, table);
       if (url.searchParams.get("auto")) {
         const best = autoTuneK(sessionPlays, signals);
         return json({ k: best.k, phases: best.phases, boundaries: best.boundaries });

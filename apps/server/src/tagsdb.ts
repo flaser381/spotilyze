@@ -26,17 +26,29 @@ export function openTagsDb(path: string): boolean {
 
 const norm = (s: string): string => s.trim().toLowerCase();
 
-/** Genres for one artist (by name), or null if unknown to the baked set. */
+// Per-process memo (norm name → parsed genres). The baked DB is read-only and static,
+// so this never needs invalidation. Without it every amap[artist] access — millions per
+// timeframe/k recompute — hit SQLite + JSON.parse; with it, only the first per artist does.
+const cache = new Map<string, WeightedGenre[] | null>();
+
+/** Genres for one artist (by name), or null if unknown to the baked set. Memoized. */
 export function tagsFor(artist: string): WeightedGenre[] | null {
   if (!stmt) return null;
-  const row = stmt.get(norm(artist)) as { genres: string } | null;
-  if (!row) return null;
-  try {
-    const g = JSON.parse(row.genres) as WeightedGenre[];
-    return g.length ? g : null;
-  } catch {
-    return null;
+  const key = norm(artist);
+  const cached = cache.get(key);
+  if (cached !== undefined) return cached; // null is also a cached (miss) result
+  const row = stmt.get(key) as { genres: string } | null;
+  let val: WeightedGenre[] | null = null;
+  if (row) {
+    try {
+      const g = JSON.parse(row.genres) as WeightedGenre[];
+      val = g.length ? g : null;
+    } catch {
+      val = null;
+    }
   }
+  cache.set(key, val);
+  return val;
 }
 
 /**
