@@ -121,6 +121,8 @@ export function parsePlays(rawRows: RawPlay[]): ParseResult {
       shuffle: r.shuffle === true,
       country: r.conn_country ?? null,
       hourLocal: new Date(t).getUTCHours(), // UTC for now; refine via country→TZ later
+      reasonStart: (r.reason_start as string | undefined) ?? null,
+      reasonEnd: (r.reason_end as string | undefined) ?? null,
     });
   }
 

@@ -33,7 +33,7 @@ const option = computed(() => {
 </script>
 
 <template>
-  <WidgetCard title="When you listen" span="s4">
+  <WidgetCard title="When you listen" span="s3">
     <VChart :option="option" autoresize style="height: 250px" />
   </WidgetCard>
 </template>

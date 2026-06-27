@@ -10,7 +10,7 @@ const max = computed(() => artists.value[0]?.plays ?? 1);
 </script>
 
 <template>
-  <WidgetCard title="Top artists" span="s4">
+  <WidgetCard title="Top artists" span="s3">
     <div class="rows">
       <div v-for="(a, i) in artists" :key="a.name" class="row">
         <span class="rank">{{ i + 1 }}</span>

@@ -1,4 +1,5 @@
 import { playAVD } from "./avd";
+import type { SkipEvent } from "./parse";
 import type { ArtistGenreMap, GenreAVDTable, Play, Widgets } from "./types";
 
 export type { Widgets };
@@ -7,6 +8,29 @@ const monthKey = (ts: number) => {
   const d = new Date(ts);
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 };
+
+// reason_start → "did you choose this track, or did the queue?"
+const DELIBERATE = new Set(["clickrow", "playbtn", "clickside"]); // picked from a list / library / search
+/** Classify a play's start. `null`/unknown reasons (appload, remote, trackerror…) → "other" (uncounted). */
+export function classifyStart(rs?: string | null): "deliberate" | "replay" | "autoplay" | "skip" | "other" {
+  if (!rs) return "other";
+  if (DELIBERATE.has(rs)) return "deliberate";
+  if (rs === "backbtn") return "replay"; // went back to hear it again
+  if (rs === "trackdone") return "autoplay"; // queue/autoplay rolled into it
+  if (rs === "fwdbtn") return "skip"; // skipped forward onto it
+  return "other";
+}
+
+// reason_end → "did you let the track finish, or bail?" The honest, track-level signal:
+// fwdbtn/backbtn mean you navigated away; trackdone means it ran out. endplay/logout/
+// unexpected-exit are session-ends (you stopped listening, not a verdict on the track) → excluded.
+/** Classify a play's end into a navigation decision, or "other" (session-end / unknown). */
+export function classifyEnd(re?: string | null): "finished" | "skipped" | "back" | "other" {
+  if (re === "trackdone") return "finished";
+  if (re === "fwdbtn") return "skipped"; // skipped forward off it
+  if (re === "backbtn") return "back"; // left it to go back
+  return "other";
+}
 
 /**
  * Distribute one play across its artist's genres (weights normalized to sum 1).
@@ -26,10 +50,11 @@ export function computeWidgets(
   plays: Play[],
   amap: ArtistGenreMap,
   table: GenreAVDTable,
-  opts: { topN?: number; streamGenres?: number } = {},
+  opts: { topN?: number; streamGenres?: number; skips?: SkipEvent[] } = {},
 ): Widgets {
   const topN = opts.topN ?? 15;
   const streamGenres = opts.streamGenres ?? 8;
+  const skips = opts.skips ?? [];
 
   const artistPlays = new Map<string, number>();
   const artistMs = new Map<string, number>();
@@ -42,8 +67,19 @@ export function computeWidgets(
   const byCalMonth = new Map<string, Map<string, number>>(); // month → genre → share-sum
 
   let sa = 0, sv = 0, sd = 0, resolved = 0, totalMs = 0;
+  const rest = { finished: 0, skipped: 0, back: 0, decided: 0 };
+  const artistEnd = new Map<string, { decided: number; bail: number }>(); // for the love-hate ranking
 
   for (const p of plays) {
+    const ec = classifyEnd(p.reasonEnd);
+    if (ec !== "other") {
+      rest[ec]++;
+      rest.decided++;
+      const ae = artistEnd.get(p.artist) ?? { decided: 0, bail: 0 };
+      ae.decided++;
+      if (ec !== "finished") ae.bail++; // skipped or back = bailed on this artist
+      artistEnd.set(p.artist, ae);
+    }
     artistPlays.set(p.artist, (artistPlays.get(p.artist) ?? 0) + 1);
     artistMs.set(p.artist, (artistMs.get(p.artist) ?? 0) + p.msPlayed);
     totalMs += p.msPlayed;
@@ -83,6 +119,17 @@ export function computeWidgets(
     }
   }
 
+  // fold sub-30s fast-skips into restlessness: a track surfaced and you bailed within 30s
+  // (the strongest rejection). Without these, heavy skippers look patient (their skips
+  // never became "plays"). Counted per-artist too, so love-hate reflects quick-skips.
+  for (const s of skips) {
+    const ae = artistEnd.get(s.artist) ?? { decided: 0, bail: 0 };
+    ae.decided++;
+    ae.bail++;
+    artistEnd.set(s.artist, ae);
+  }
+  const quickSkips = skips.length;
+
   const totalPlays = plays.length;
   const topGenres = [...genrePlays.entries()]
     .sort((a, b) => b[1] - a[1])
@@ -95,6 +142,23 @@ export function computeWidgets(
     .map(([name, plays]) => ({ name, plays, hours: (artistMs.get(name) ?? 0) / 3.6e6 }));
 
   const topTracks = [...trackPlays.values()].sort((a, b) => b.plays - a.plays).slice(0, topN);
+
+  // love-hate: artists you genuinely keep coming back to AND skip a lot — a real split,
+  // not "outgrown". A lopsided skip rate (you bail almost every time it surfaces) means
+  // you don't love it anymore, it just lingers in a playlist → NOT love-hate.
+  //   • finished ≥ 15      — proof of genuine love (you complete them often)
+  //   • 0.25 ≤ bail ≤ 0.6  — both pulling; above 0.6 = rejected/outgrown, excluded
+  //   • rank by tension = min(finished, bail) — both sides must be large to score high
+  const loveHate = [...artistEnd.entries()]
+    .map(([name, e]) => {
+      const finished = e.decided - e.bail;
+      const bailRate = e.decided ? e.bail / e.decided : 0;
+      return { name, plays: artistPlays.get(name) ?? e.decided, finished, bailRate, tension: Math.min(finished, e.bail) };
+    })
+    .filter((x) => x.finished >= 15 && x.bailRate >= 0.25 && x.bailRate <= 0.6)
+    .sort((a, b) => b.tension - a.tension)
+    .slice(0, 6)
+    .map(({ name, plays, bailRate }) => ({ name, plays, bailRate }));
 
   const valenceByMonth = [...Array(12)].map((_, i) => {
     const e = byMonthOfYear.get(i + 1);
@@ -162,5 +226,6 @@ export function computeWidgets(
     moodByDay,
     moodTimeline,
     genresOverTime: { keys: streamKeys, rows },
+    restlessness: { ...rest, quickSkips, loveHate },
   };
 }

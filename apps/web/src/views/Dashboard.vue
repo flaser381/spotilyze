@@ -13,6 +13,7 @@ import RediscoveryWidget from "../components/widgets/RediscoveryWidget.vue";
 import SummaryWidget from "../components/widgets/SummaryWidget.vue";
 import TasteStabilityWidget from "../components/widgets/TasteStabilityWidget.vue";
 import TimeOfDayWidget from "../components/widgets/TimeOfDayWidget.vue";
+import RestlessnessWidget from "../components/widgets/RestlessnessWidget.vue";
 import TopArtistsWidget from "../components/widgets/TopArtistsWidget.vue";
 import TopGenresWidget from "../components/widgets/TopGenresWidget.vue";
 import TopTracksWidget from "../components/widgets/TopTracksWidget.vue";
@@ -87,6 +88,7 @@ async function exportProfile() {
       <SummaryWidget />
       <AvdRadarWidget />
       <TasteStabilityWidget />
+      <RestlessnessWidget />
       <TopGenresWidget />
       <TopArtistsWidget />
       <TopTracksWidget />

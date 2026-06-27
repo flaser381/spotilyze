@@ -256,7 +256,7 @@ Bun.serve({
               await send({ type: "log", stage: "avd", msg: `Matched ${fmt(cov.artist)} plays to the Spotify AVD dataset — ${pct(cov.artist)}% by artist (rest via genre)` });
             }
             await send({ type: "log", stage: "avd", msg: "Building your Arousal·Valence·Depth sound-profile…" });
-            const result = analyze(plays, genreAmap, table);
+            const result = analyze(plays, genreAmap, table, { skips });
             const tuned = autoTuneK(plays, result.signals); // pick k for ~0.8 events/yr up front
             result.phases = tuned.phases;
             result.boundaries = tuned.boundaries;
@@ -288,7 +288,8 @@ Bun.serve({
       const from = Number(url.searchParams.get("from")) || Number.NEGATIVE_INFINITY;
       const to = Number(url.searchParams.get("to")) || Number.POSITIVE_INFINITY;
       const slice = sessionPlays.filter((p) => p.ts >= from && p.ts <= to);
-      return json({ result: analyze(slice, genreAmap, table) });
+      const skipSlice = sessionSkips.filter((s) => s.ts >= from && s.ts <= to);
+      return json({ result: analyze(slice, genreAmap, table, { skips: skipSlice }) });
     }
 
     // re-run life-phase detection at a given sensitivity k (lower = more phases).
@@ -333,7 +334,7 @@ Bun.serve({
     // data embedded, so it looks identical and the timeframe slider recomputes offline.
     if (url.pathname === "/api/export" && req.method === "GET") {
       if (sessionPlays.length === 0) return new Response("no session; upload first", { status: 409 });
-      const full = analyze(sessionPlays, genreAmap, table);
+      const full = analyze(sessionPlays, genreAmap, table, { skips: sessionSkips });
       const ins = computeInsights(sessionPlays, genreAmap, table);
       const signals = computeSignals(sessionPlays, genreAmap, table);
       const { phases } = detectLifePhases(sessionPlays, signals, genreAmap, table);
@@ -348,8 +349,13 @@ Bun.serve({
       const ti = (s: string) => { let i = tIx.get(s); if (i === undefined) { i = tracks.length; tracks.push(s); tIx.set(s, i); } return i; };
       // av = packed per-play AVD (a,v,d → 3-decimal ints in one number; -1 = none → genre fallback)
       const packAvd = (p: Play): number => (p.avd ? Math.round(p.avd.a * 1000) * 1e6 + Math.round(p.avd.v * 1000) * 1e3 + Math.round(p.avd.d * 1000) : -1);
-      const P = { ts: [] as number[], a: [] as number[], t: [] as number[], m: [] as number[], av: [] as number[] };
-      for (const p of sessionPlays) { P.ts.push(p.ts); P.a.push(ai(p.artist)); P.t.push(ti(p.track)); P.m.push(p.msPlayed); P.av.push(packAvd(p)); }
+      // intern reason_start/reason_end into a tiny shared vocab so every reason-based
+      // metric (restlessness, rewind obsessions) recomputes correctly offline. -1 = null.
+      const rIx = new Map<string, number>();
+      const reasons: string[] = [];
+      const ri = (s: string | null | undefined): number => { if (s == null) return -1; let i = rIx.get(s); if (i === undefined) { i = reasons.length; reasons.push(s); rIx.set(s, i); } return i; };
+      const P = { ts: [] as number[], a: [] as number[], t: [] as number[], m: [] as number[], av: [] as number[], rs: [] as number[], re: [] as number[] };
+      for (const p of sessionPlays) { P.ts.push(p.ts); P.a.push(ai(p.artist)); P.t.push(ti(p.track)); P.m.push(p.msPlayed); P.av.push(packAvd(p)); P.rs.push(ri(p.reasonStart)); P.re.push(ri(p.reasonEnd)); }
       const S = { ts: [] as number[], a: [] as number[], t: [] as number[], m: [] as number[] };
       for (const s of sessionSkips) { S.ts.push(s.ts); S.a.push(ai(s.artist)); S.t.push(ti(s.track)); S.m.push(s.msPlayed); }
       const amap: Record<string, unknown> = {};
@@ -367,6 +373,7 @@ Bun.serve({
         amap,
         artists,
         tracks,
+        reasons,
         P,
         S,
       };
@@ -430,7 +437,7 @@ Bun.serve({
       if (sessionCards && url.searchParams.get("refresh") !== "1") return json({ configured: true, cards: sessionCards, cached: true });
       const cfg = llmConfig(getSettings().llm);
       if (!cfg) return json({ configured: false, error: "LLM not configured" });
-      const full = analyze(sessionPlays, genreAmap, table);
+      const full = analyze(sessionPlays, genreAmap, table, { skips: sessionSkips });
       const rd = buildReportData(sessionPlays, genreAmap, table, { skips: sessionSkips, phases: full.phases });
       const pods = sessionUsePodcasts && sessionPodcasts.length ? podcastProfile(sessionPodcasts) : null;
       try {
@@ -456,7 +463,7 @@ Bun.serve({
       const cfg = llmConfig(getSettings().llm);
       if (!cfg) return json({ configured: false, error: "LLM not configured — set LLM_MODEL / LLM_API_KEY (and LLM_PROVIDER) in .env" });
       const persona = (url.searchParams.get("persona") ?? "analyst") as Persona;
-      const full = analyze(sessionPlays, genreAmap, table);
+      const full = analyze(sessionPlays, genreAmap, table, { skips: sessionSkips });
       const rd = buildReportData(sessionPlays, genreAmap, table, { skips: sessionSkips, phases: full.phases });
       const pods = sessionUsePodcasts && sessionPodcasts.length ? podcastProfile(sessionPodcasts) : null;
       const prompt = buildLLMReport(full, rd, { persona, podcasts: pods }); // full prompt — Ollama gets a raised num_ctx

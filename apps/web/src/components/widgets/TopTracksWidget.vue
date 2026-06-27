@@ -9,7 +9,7 @@ const tracks = computed(() => (store.widgets?.topTracks ?? []).slice(0, 10));
 </script>
 
 <template>
-  <WidgetCard title="Most played tracks" span="s4">
+  <WidgetCard title="Most played tracks" span="s3">
     <div class="rows">
       <div v-for="(t, i) in tracks" :key="t.name + t.artist" class="row">
         <span class="rank">{{ i + 1 }}</span>

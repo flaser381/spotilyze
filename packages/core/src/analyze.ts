@@ -1,6 +1,7 @@
 import { avdCoverage } from "./avd";
 import { detectLifePhases, type LifePhaseOpts } from "./lifephases";
 import { computeWidgets } from "./metrics";
+import type { SkipEvent } from "./parse";
 import { computeSignals, type SignalOpts } from "./signals";
 import type { AnalysisResult, ArtistGenreMap, GenreAVDTable, Play } from "./types";
 
@@ -9,6 +10,7 @@ export interface AnalyzeOpts {
   topN?: number;
   streamGenres?: number;
   phases?: LifePhaseOpts;
+  skips?: SkipEvent[]; // sub-30s fast-skips — folded into the restlessness metric (else heavy skippers look patient)
 }
 
 /**
@@ -21,7 +23,7 @@ export function analyze(
   table: GenreAVDTable,
   opts: AnalyzeOpts = {},
 ): AnalysisResult {
-  const widgets = computeWidgets(plays, amap, table, { topN: opts.topN, streamGenres: opts.streamGenres });
+  const widgets = computeWidgets(plays, amap, table, { topN: opts.topN, streamGenres: opts.streamGenres, skips: opts.skips });
   const signals = computeSignals(plays, amap, table, opts.signals);
   const cov = avdCoverage(plays, amap, table);
   const { boundaries, phases } = detectLifePhases(plays, signals, amap, table, opts.phases);

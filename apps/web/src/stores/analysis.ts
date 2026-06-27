@@ -39,7 +39,8 @@ export interface OfflineData {
   amap: ArtistGenreMap;
   artists: string[];
   tracks: string[];
-  P: { ts: number[]; a: number[]; t: number[]; m: number[]; av?: number[] };
+  reasons?: string[]; // interned reason_start/reason_end vocab (rs/re index into this; -1 = null)
+  P: { ts: number[]; a: number[]; t: number[]; m: number[]; av?: number[]; rs?: number[]; re?: number[] };
   S: { ts: number[]; a: number[]; t: number[]; m: number[] };
 }
 
@@ -106,10 +107,12 @@ export const useAnalysis = defineStore("analysis", {
       const av = d.P.av; // packed per-play AVD (3-decimal ints); -1 = none → genre fallback
       const unpack = (n: number | undefined): Play["avd"] =>
         n == null || n < 0 ? null : { a: Math.floor(n / 1e6) / 1000, v: (Math.floor(n / 1e3) % 1000) / 1000, d: (n % 1000) / 1000 };
+      const R = d.reasons ?? []; // interned reason vocab; rs/re index into it (-1 = null)
+      const reason = (idx: number | undefined): string | null => (idx == null || idx < 0 ? null : R[idx] ?? null);
       const plays: Play[] = d.P.ts.map((ts, i) => ({
         ts, artist: A[d.P.a[i]!]!, track: T[d.P.t[i]!]!, album: "", uri: null,
         msPlayed: d.P.m[i]!, skipped: false, shuffle: false, country: null, hourLocal: new Date(ts).getUTCHours(),
-        avd: unpack(av?.[i]),
+        avd: unpack(av?.[i]), reasonStart: reason(d.P.rs?.[i]), reasonEnd: reason(d.P.re?.[i]),
       }));
       const skips: SkipEvent[] = d.S.ts.map((ts, i) => ({ ts, artist: A[d.S.a[i]!]!, track: T[d.S.t[i]!]!, uri: null, msPlayed: d.S.m[i]! }));
       OFFLINE_SRC = { plays, skips, amap: d.amap, table: d.table };
@@ -223,7 +226,8 @@ export const useAnalysis = defineStore("analysis", {
       }
       if (this.offline && OFFLINE_SRC) {
         const ps = OFFLINE_SRC.plays.filter((p) => p.ts >= from && p.ts <= to);
-        this.result = analyze(ps, OFFLINE_SRC.amap, OFFLINE_SRC.table);
+        const sk = OFFLINE_SRC.skips.filter((s) => s.ts >= from && s.ts <= to);
+        this.result = analyze(ps, OFFLINE_SRC.amap, OFFLINE_SRC.table, { skips: sk });
         return;
       }
       this.rangeLoading = true;

@@ -26,6 +26,8 @@ export interface Play {
   country: string | null; // kept (coarse) for TZ refinement, not stored per-user
   hourLocal: number; // 0-23, best-effort
   avd?: AVD | null; // pre-resolved AVD (Spotify artist dataset, measured). If set, wins over genre derivation.
+  reasonStart?: string | null; // why the track started: clickrow/playbtn/backbtn/trackdone/fwdbtn/… (Extended export only)
+  reasonEnd?: string | null; // why it ended: trackdone/fwdbtn/endplay/… (Extended export only)
 }
 
 // ── Genre / AVD ─────────────────────────────────────────────────────────────
@@ -110,6 +112,17 @@ export interface Widgets {
   moodByDay: { day: number; valence: number; depth: number; arousal: number; plays: number }[]; // day-of-month 1..31
   moodTimeline: { ts: number; valence: number; depth: number; arousal: number; plays: number }[]; // hourly chronological
   genresOverTime: { keys: string[]; rows: { month: string; shares: number[] }[] };
+  // restlessness — how tracks END (reason_end). Did you let it finish, or bail early?
+  // Only navigation decisions count; session-ends (endplay/logout/exit) are excluded.
+  restlessness: {
+    finished: number; // trackdone — let it play to the end
+    skipped: number; // fwdbtn — skipped forward off it (after ≥30s)
+    back: number; // backbtn — left it to go back
+    decided: number; // finished + skipped + back (plays where you made a fwd/back decision)
+    quickSkips: number; // sub-30s fast-skips (track surfaced, bailed within 30s) — strongest rejection
+    // most-played artists you also bail on most — "love-hate" (play a lot, skip a lot)
+    loveHate: { name: string; plays: number; bailRate: number }[];
+  };
 }
 
 export interface AnalysisResult {
