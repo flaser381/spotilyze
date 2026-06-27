@@ -10,13 +10,17 @@ const store = useAnalysis();
 const option = computed(() => {
   const tod = store.widgets?.timeOfDay ?? [];
   const data: [number, number, number][] = [];
-  let max = 1;
+  const nz: number[] = [];
   tod.forEach((row, wd) =>
     row.forEach((c, h) => {
       data.push([h, wd, c]);
-      if (c > max) max = c;
+      if (c > 0) nz.push(c);
     }),
   );
+  // colour-scale cap at the 95th percentile of active cells, not the single hottest one —
+  // otherwise one peak hour flattens every other cell to near-black and the pattern vanishes.
+  nz.sort((a, b) => a - b);
+  const max = nz.length ? Math.max(1, nz[Math.floor(nz.length * 0.95)] ?? nz[nz.length - 1]!) : 1;
   return {
     tooltip: { ...tooltip, formatter: (p: { value: [number, number, number] }) => `${DAYS[p.value[1]]} ${p.value[0]}:00 — ${p.value[2]} plays` },
     grid: grid({ left: 4, bottom: 4, top: 6 }),
@@ -27,13 +31,13 @@ const option = computed(() => {
     xAxis: { type: "category", data: [...Array(24).keys()], ...axisStyle, splitArea: { show: false }, axisLabel: { ...axisStyle.axisLabel, interval: 2 } },
     yAxis: { type: "category", data: DAYS, ...axisStyle, splitArea: { show: false } },
     visualMap: { min: 0, max, calculable: false, show: false, inRange: { color: ["#0e1320", "#243a6b", "#5c8cff", "#7c5cff", "#ff6b6b"] } },
-    series: [{ type: "heatmap", data, itemStyle: { borderColor: "#0a0c12", borderWidth: 1 } }],
+    series: [{ type: "heatmap", data, itemStyle: { borderColor: "#0a0c12", borderWidth: 1 }, emphasis: { itemStyle: { borderColor: "#fff", borderWidth: 1 } } }],
   };
 });
 </script>
 
 <template>
   <WidgetCard title="When you listen" span="s3">
-    <VChart :option="option" autoresize style="height: 250px" />
+    <VChart :option="option" autoresize class="chart" />
   </WidgetCard>
 </template>

@@ -7,7 +7,7 @@ import WidgetCard from "../WidgetCard.vue";
 
 const store = useAnalysis();
 const option = computed(() => {
-  const g = (store.widgets?.topGenres ?? []).slice(0, 10).reverse();
+  const g = (store.widgets?.topGenres ?? []).slice(0, 14).reverse();
   return {
     tooltip: { ...tooltip, trigger: "axis", valueFormatter: (v: number) => `${v.toFixed(1)}%` },
     dataZoom: [{ type: "inside", yAxisIndex: 0, zoomOnMouseWheel: true, moveOnMouseWheel: false, filterMode: "none" }],
@@ -28,6 +28,6 @@ const option = computed(() => {
 
 <template>
   <WidgetCard title="Top genres" span="s3">
-    <VChart :option="option" autoresize style="height: 250px" />
+    <VChart :option="option" autoresize class="chart" />
   </WidgetCard>
 </template>
