@@ -72,7 +72,9 @@ Spotilyze is built the opposite way to the systems it borrows ideas from.
 
 - **AVD sound-profile**: Arousal, Valence, and Depth, measured per play and tracked over time.
 - **Life-phase detection**: change-point detection that finds the periods where your listening shifted.
-- **Interactive dashboard**: timeframe slider, top artists/genres/tracks, mood-by-month, time-of-day heatmap, genre evolution, taste stability.
+- **Interactive dashboard**: timeframe slider, top artists/genres/tracks, time-of-day heatmap, genre evolution, taste stability.
+- **Computed-metrics graph**: mood, taste stability, and restlessness on one zoomable timeline (refines from yearly down to daily as you zoom).
+- **Restlessness & love-hate**: how often you let tracks finish vs bail early (sub-30s quick-skips included), plus the artists you play a lot *and* skip a lot.
 - **Wrapped recap**: personality read, turning-point summaries; runs with or without an LLM.
 - **LLM report**: multiple personas, Analyst, Ad profile, Dating read, Roast, Recommendations.
 - **Insights**: obsessions, rediscoveries, outgrown tracks, podcasts, circadian patterns.
@@ -237,6 +239,7 @@ plays → artists → genres (baked genre tags ship with the app, no key, no liv
 - **Measured AVD**: per-artist Arousal/Valence/Depth from Spotify audio analysis, used for the displayed sound-profile.
 - **Genre → AVD table** (1,837 genres, in `data/spotilyze.sqlite3`): A/V seeded from the **MuSe** dataset, Depth hand-mapped from Greenberg anchors, sub-genres inherit from parents plus modifier words. Used for life-phase detection (smoother week-to-week than measured).
 - **Life-phase detection**: sliding-window divergence on `[arousal, valence, depth, entropy, novelty]` with an adaptive median+k·MAD threshold. Volume and replay are excluded because they measure engagement, not life-change.
+- **Restlessness**: from each play's `reason_end` — tracks you let finish (`trackdone`) vs bail on (`fwdbtn`), with sub-30s quick-skips folded in (else a heavy skipper looks patient, since their skips never count as plays). Session-ends (closed app, logout) are excluded. "Love-hate" surfaces artists you finish *and* skip in roughly equal measure — a balanced split, not lopsided rejection (that's just *outgrown*). These fields exist only in the **Extended** export, so this read needs that history.
 
 ---
 
