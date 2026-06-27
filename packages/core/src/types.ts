@@ -111,6 +111,7 @@ export interface Widgets {
   valenceByMonth: { month: number; valence: number; depth: number; arousal: number; plays: number }[];
   moodByDay: { day: number; valence: number; depth: number; arousal: number; plays: number }[]; // day-of-month 1..31
   moodTimeline: { ts: number; valence: number; depth: number; arousal: number; plays: number }[]; // hourly chronological
+  restlessTimeline: { ts: number; bail: number; total: number }[]; // daily bail/total counts → restlessness % over time (buckets like moodTimeline)
   genresOverTime: { keys: string[]; rows: { month: string; shares: number[] }[] };
   // restlessness — how tracks END (reason_end). Did you let it finish, or bail early?
   // Only navigation decisions count; session-ends (endplay/logout/exit) are excluded.

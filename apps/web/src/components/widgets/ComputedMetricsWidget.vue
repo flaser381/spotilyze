@@ -2,7 +2,7 @@
 import { learnMoodModel, moodFormula, moodIndex } from "@spotilyze/core";
 import { computed, reactive } from "vue";
 import VChart from "vue-echarts";
-import { AVD, axisStyle, fmtDay, grid, tooltip } from "../../theme";
+import { axisStyle, fmtDay, grid, tooltip } from "../../theme";
 import { useAnalysis } from "../../stores/analysis";
 import WidgetCard from "../WidgetCard.vue";
 
@@ -53,29 +53,52 @@ const bucketTs = (ts: number, res: Res): number => {
   return Date.UTC(d.getUTCFullYear(), 0, 1);
 };
 
-// plays-weighted AVD per period → mood (so coarser zoom = smoother averaged signal)
+// all three lines bucketed at the same resolution so coarser zoom = smoother averages.
 const series = computed(() => {
-  const days = store.widgets?.moodTimeline ?? [];
   const res = resolution.value;
-  const m = new Map<number, { sv: number; sa: number; sd: number; p: number }>();
+
+  // mood — plays-weighted AVD per period → mood index (0..100)
+  const days = store.widgets?.moodTimeline ?? [];
+  const mm = new Map<number, { sv: number; sa: number; sd: number; p: number }>();
   for (const d of days) {
     const k = bucketTs(d.ts, res);
-    const e = m.get(k) ?? { sv: 0, sa: 0, sd: 0, p: 0 };
+    const e = mm.get(k) ?? { sv: 0, sa: 0, sd: 0, p: 0 };
     e.sv += d.valence * d.plays; e.sa += d.arousal * d.plays; e.sd += d.depth * d.plays; e.p += d.plays;
-    m.set(k, e);
+    mm.set(k, e);
   }
-  const mood: [number, number][] = [];
-  const val: [number, number][] = [];
-  for (const [ts, e] of [...m.entries()].sort((a, b) => a[0] - b[0])) {
+  const mood: [number, number][] = [...mm.entries()].sort((a, b) => a[0] - b[0]).map(([ts, e]) => {
     const v = e.sv / e.p, a = e.sa / e.p, dep = e.sd / e.p;
-    mood.push([ts, +(moodIndex({ valence: v, arousal: a, depth: dep }, model.value) * 100).toFixed(1)]);
-    val.push([ts, +(v * 100).toFixed(1)]);
+    return [ts, +(moodIndex({ valence: v, arousal: a, depth: dep }, model.value) * 100).toFixed(1)];
+  });
+
+  // taste stability — weekly top-artist Jaccard, nPlays-weighted into each bucket.
+  // first bin has no predecessor and gaps are meaningless → excluded (as in the stat widget).
+  const sm = new Map<number, { s: number; w: number }>();
+  store.signals.forEach((sig, i) => {
+    if (i === 0 || sig.gap) return;
+    const k = bucketTs(sig.weekStart, res);
+    const e = sm.get(k) ?? { s: 0, w: 0 };
+    e.s += sig.stability * sig.nPlays; e.w += sig.nPlays;
+    sm.set(k, e);
+  });
+  const stability: [number, number][] = [...sm.entries()].sort((a, b) => a[0] - b[0]).filter(([, e]) => e.w > 0).map(([ts, e]) => [ts, +((e.s / e.w) * 100).toFixed(1)]);
+
+  // restlessness — bail / total tracks surfaced per bucket (incl. sub-30s quick-skips)
+  const rt = store.widgets?.restlessTimeline ?? [];
+  const rm = new Map<number, { b: number; t: number }>();
+  for (const d of rt) {
+    const k = bucketTs(d.ts, res);
+    const e = rm.get(k) ?? { b: 0, t: 0 };
+    e.b += d.bail; e.t += d.total;
+    rm.set(k, e);
   }
-  return { mood, val };
+  const restless: [number, number][] = [...rm.entries()].sort((a, b) => a[0] - b[0]).filter(([, e]) => e.t > 0).map(([ts, e]) => [ts, +((e.b / e.t) * 100).toFixed(1)]);
+
+  return { mood, stability, restless };
 });
 
 const option = computed(() => {
-  const { mood, val } = series.value;
+  const { mood, stability, restless } = series.value;
   const res = resolution.value;
   const fmtTs = (ts: number) => (res === "year" ? `${new Date(ts).getUTCFullYear()}` : res === "month" ? new Date(ts).toLocaleDateString("en", { year: "numeric", month: "short" }) : fmtDay(ts));
   return {
@@ -84,7 +107,7 @@ const option = computed(() => {
       formatter: (ps: { axisValue: number; seriesName: string; value: [number, number]; color: string }[]) =>
         ps.length ? `<div style="margin-bottom:3px">${fmtTs(ps[0]!.axisValue)} · per ${RES_LABEL[res]}</div>` + ps.map((p) => `<span style="color:${p.color}">●</span> ${p.seriesName}: <b>${p.value[1]}</b>`).join("<br/>") : "",
     },
-    legend: { data: ["Mood", "Valence"], textStyle: { color: "#8a91a6" }, top: 0, itemHeight: 8, itemWidth: 14 },
+    legend: { data: ["Mood", "Taste stability", "Restlessness"], textStyle: { color: "#8a91a6" }, top: 0, itemHeight: 8, itemWidth: 14 },
     grid: grid({ top: 30, bottom: 58 }),
     xAxis: { type: "time", ...axisStyle },
     yAxis: { type: "value", min: 0, max: 100, ...axisStyle, splitLine: { show: false } },
@@ -96,20 +119,23 @@ const option = computed(() => {
       {
         name: "Mood", type: "line", showSymbol: false, smooth: true, z: 3,
         data: mood, lineStyle: { width: 2.4, color: "#ffb454" }, itemStyle: { color: "#ffb454" },
-        areaStyle: { color: { type: "linear", x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: "rgba(255,180,84,0.22)" }, { offset: 1, color: "rgba(255,180,84,0.01)" }] } },
+        areaStyle: { color: { type: "linear", x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: "rgba(255,180,84,0.18)" }, { offset: 1, color: "rgba(255,180,84,0.01)" }] } },
       },
-      { name: "Valence", type: "line", showSymbol: false, smooth: true, data: val, lineStyle: { width: 1, color: AVD.v, opacity: 0.45, type: "dashed" }, itemStyle: { color: AVD.v } },
+      { name: "Taste stability", type: "line", showSymbol: false, smooth: true, data: stability, lineStyle: { width: 2, color: "#34d6e6" }, itemStyle: { color: "#34d6e6" } },
+      { name: "Restlessness", type: "line", showSymbol: false, smooth: true, data: restless, lineStyle: { width: 2, color: "#ff6b6b" }, itemStyle: { color: "#ff6b6b" } },
     ],
   };
 });
 </script>
 
 <template>
-  <WidgetCard title="Mood over time" span="s12">
+  <WidgetCard title="Computed metrics" span="s12">
     <div class="mg">
       <p class="cap muted">
-        Mood = <strong>{{ formula }}</strong> — valence (the validated tone axis), refined by the signals that track it in <em>your</em> listening. Higher = brighter, lower = heavier.
-        Averaged <strong class="hl">per {{ RES_LABEL[resolution] }}</strong> — <strong class="hl">scroll or drag to zoom</strong> and it refines down to daily; the dashed line is raw valence. Follows the timeframe above.
+        <strong style="color: #ffb454">Mood</strong> = {{ formula }} (higher = brighter) ·
+        <strong style="color: #34d6e6">Taste stability</strong> = week-to-week overlap of your top artists ·
+        <strong style="color: #ff6b6b">Restlessness</strong> = share of tracks you bail on early.
+        All 0–100, averaged <strong class="hl">per {{ RES_LABEL[resolution] }}</strong> — <strong class="hl">scroll or drag to zoom</strong> and it refines down to daily. Follows the timeframe above.
       </p>
       <VChart :option="option" autoresize class="chart" @datazoom="onZoom" />
     </div>
@@ -120,6 +146,6 @@ const option = computed(() => {
 .mg { display: flex; flex-direction: column; height: 100%; }
 .chart { flex: 1; min-height: 300px; width: 100%; }
 .cap { font-size: 12px; margin: 0 0 8px; line-height: 1.5; }
-.cap strong { color: #ffb454; font-weight: 600; }
+.cap strong { font-weight: 600; }
 .cap strong.hl { color: var(--text); }
 </style>

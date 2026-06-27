@@ -6,7 +6,7 @@ import TimeframeSlider from "../components/TimeframeSlider.vue";
 import AvdRadarWidget from "../components/widgets/AvdRadarWidget.vue";
 import OutgrownWidget from "../components/widgets/OutgrownWidget.vue";
 import GenresOverTimeWidget from "../components/widgets/GenresOverTimeWidget.vue";
-import MoodGraphWidget from "../components/widgets/MoodGraphWidget.vue";
+import ComputedMetricsWidget from "../components/widgets/ComputedMetricsWidget.vue";
 import ObsessionWidget from "../components/widgets/ObsessionWidget.vue";
 import PodcastWidget from "../components/widgets/PodcastWidget.vue";
 import RediscoveryWidget from "../components/widgets/RediscoveryWidget.vue";
@@ -93,7 +93,7 @@ async function exportProfile() {
       <TopArtistsWidget />
       <TopTracksWidget />
       <TimeOfDayWidget />
-      <MoodGraphWidget />
+      <ComputedMetricsWidget />
       <GenresOverTimeWidget />
       <OutgrownWidget />
       <ObsessionWidget />

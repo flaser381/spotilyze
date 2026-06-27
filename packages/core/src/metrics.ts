@@ -64,6 +64,7 @@ export function computeWidgets(
   const byMonthOfYear = new Map<number, { sv: number; sd: number; sa: number; n: number }>();
   const byDayOfMonth = new Map<number, { sv: number; sd: number; sa: number; n: number }>(); // 1..31 — monthly mood cycle
   const byDay = new Map<number, { sv: number; sd: number; sa: number; n: number; plays: number }>(); // day-bucket ts → mood timeline
+  const byDayRest = new Map<number, { bail: number; total: number }>(); // day-bucket ts → restlessness over time
   const byCalMonth = new Map<string, Map<string, number>>(); // month → genre → share-sum
 
   let sa = 0, sv = 0, sd = 0, resolved = 0, totalMs = 0;
@@ -95,6 +96,7 @@ export function computeWidgets(
     let de = byDay.get(db);
     if (!de) byDay.set(db, (de = { sv: 0, sd: 0, sa: 0, n: 0, plays: 0 }));
     de.plays++;
+    if (ec !== "other") { const re = byDayRest.get(db) ?? { bail: 0, total: 0 }; re.total++; if (ec !== "finished") re.bail++; byDayRest.set(db, re); }
 
     const shares = genreShares(p, amap, table);
     for (const [g, s] of shares) genrePlays.set(g, (genrePlays.get(g) ?? 0) + s);
@@ -127,8 +129,14 @@ export function computeWidgets(
     ae.decided++;
     ae.bail++;
     artistEnd.set(s.artist, ae);
+    const db = s.ts - (s.ts % 864e5);
+    const re = byDayRest.get(db) ?? { bail: 0, total: 0 };
+    re.bail++;
+    re.total++;
+    byDayRest.set(db, re);
   }
   const quickSkips = skips.length;
+  const restlessTimeline = [...byDayRest.entries()].sort((a, b) => a[0] - b[0]).map(([ts, e]) => ({ ts, bail: e.bail, total: e.total }));
 
   const totalPlays = plays.length;
   const topGenres = [...genrePlays.entries()]
@@ -225,6 +233,7 @@ export function computeWidgets(
     valenceByMonth,
     moodByDay,
     moodTimeline,
+    restlessTimeline,
     genresOverTime: { keys: streamKeys, rows },
     restlessness: { ...rest, quickSkips, loveHate },
   };
