@@ -164,6 +164,11 @@ function characterize(
     diversity: level(meanEnt, base.ent || 1),
   };
 
+  // "song of the phase": most-played track in the first 2 weeks (capped to phase length),
+  // requiring ≥2 plays so it's a track you actually sat with entering the phase, not a
+  // one-off. Ties broken by earliest first play — the one that opened the window.
+  const entrySong = phaseEntrySong(segPlays, ctx.startTs, ctx.endTs);
+
   return {
     start: ctx.startTs,
     end: ctx.endTs,
@@ -172,10 +177,32 @@ function characterize(
     spread,
     topGenres: w.topGenres.map((g) => ({ name: g.name, share: +g.share.toFixed(3) })),
     topArtists: w.topArtists.map((a) => ({ name: a.name, plays: a.plays })),
-    topTracks: w.topTracks.map((t) => ({ name: t.name, plays: t.plays })),
+    topTracks: w.topTracks.map((t) => ({ name: t.name, artist: t.artist, plays: t.plays })),
     levels,
     label: phaseLabel(centroid, base.avd, levels),
     changeFromPrev: [],
     resolvedShare: +avdCoverage(segPlays, amap, table).share.toFixed(3),
+    entrySong,
   };
+}
+
+const ENTRY_WINDOW = 14 * 864e5; // 2 weeks from the phase start
+
+/** Most-played track (≥2 plays) in the phase's opening window. `segPlays` must be ascending. */
+function phaseEntrySong(segPlays: Play[], startTs: number, endTs: number): Phase["entrySong"] {
+  const winEnd = Math.min(endTs, startTs + ENTRY_WINDOW);
+  const seen = new Map<string, { name: string; artist: string; plays: number; first: number }>();
+  for (const p of segPlays) {
+    if (p.ts >= winEnd) break; // ascending → nothing past the window remains
+    const key = p.uri ?? `${p.artist}|${p.track}`;
+    const e = seen.get(key);
+    if (e) e.plays++;
+    else seen.set(key, { name: p.track, artist: p.artist, plays: 1, first: p.ts });
+  }
+  let best: { name: string; artist: string; plays: number; first: number } | null = null;
+  for (const e of seen.values()) {
+    if (e.plays < 2) continue;
+    if (!best || e.plays > best.plays || (e.plays === best.plays && e.first < best.first)) best = e;
+  }
+  return best ? { name: best.name, artist: best.artist, plays: best.plays } : null;
 }

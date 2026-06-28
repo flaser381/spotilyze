@@ -93,6 +93,19 @@ const option = computed(() => {
       lineStyle: { color: "#ff6b6b", type: "dashed", width: 1, opacity: 0.3 + 0.6 * b.confidence },
     })),
   };
+  // "song of the phase" — a ♪ pin at each phase start; the selected phase also shows its name
+  const markPoint = {
+    data: phases.value.map((p, i) => ({
+      coord: [p.start, 0.82] as [number, number],
+      symbol: "pin",
+      symbolSize: i === sel ? 22 : 13,
+      itemStyle: { color: i === sel ? "#ffb454" : "rgba(255,180,84,0.5)", borderColor: "#15161c", borderWidth: 1 },
+      label:
+        i === sel && p.entrySong
+          ? { show: true, position: "bottom" as const, distance: 5, formatter: `♪ ${p.entrySong.name}`, color: "#ffb454", fontSize: 10, fontWeight: 600 as const, textBorderColor: "#0a0c12", textBorderWidth: 3 }
+          : { show: true, position: "inside" as const, formatter: "♪", color: "#15161c", fontSize: i === sel ? 11 : 8, fontWeight: 700 as const },
+    })),
+  };
 
   const sigs: [(number | null)[], string, string, boolean][] = [
     [vol, "Volume", "#7c5cff", true],
@@ -118,6 +131,7 @@ const option = computed(() => {
     silent: true,
     markArea,
     markLine,
+    markPoint,
   });
 
   return {
@@ -179,6 +193,25 @@ const lvlColor = (l: string) => (l === "high" ? "#1ed793" : l === "low" ? "#ff6b
             </div>
           </div>
 
+          <div v-if="sel.entrySong || sel.topTracks[0]" class="songbox">
+            <span class="song-ic">♪</span>
+            <div class="song-meta">
+              <template v-if="sel.entrySong">
+                <span class="song-k">Brought you here</span>
+                <span class="song-name">{{ sel.entrySong.name }}</span>
+                <span class="song-artist muted">{{ sel.entrySong.artist }} · {{ sel.entrySong.plays }}× in the first 2 weeks</span>
+                <span v-if="sel.topTracks[0] && sel.topTracks[0].name !== sel.entrySong.name" class="opener muted">
+                  <b>Song of the phase:</b> {{ sel.topTracks[0].name }} — {{ sel.topTracks[0].artist }} ({{ sel.topTracks[0].plays }}× overall)
+                </span>
+              </template>
+              <template v-else>
+                <span class="song-k">Song of the phase</span>
+                <span class="song-name">{{ sel.topTracks[0]?.name }}</span>
+                <span class="song-artist muted">{{ sel.topTracks[0]?.artist }} · {{ sel.topTracks[0]?.plays }}× across the phase</span>
+              </template>
+            </div>
+          </div>
+
           <div class="p-grid">
             <div class="p-col">
               <div class="p-sub">AVD</div>
@@ -220,6 +253,7 @@ const lvlColor = (l: string) => (l === "high" ? "#1ed793" : l === "low" ? "#ff6b
         >
           <span class="chip-range">{{ fmtRange(p.start, p.end) }}</span>
           <span class="chip-label">{{ p.label }}</span>
+          <span v-if="p.entrySong || p.topTracks[0]" class="chip-song">♪ {{ (p.entrySong ?? p.topTracks[0])?.name }}</span>
         </button>
       </div>
     </div>
@@ -242,10 +276,10 @@ const lvlColor = (l: string) => (l === "high" ? "#1ed793" : l === "low" ? "#ff6b
   display: grid; grid-template-columns: 1fr 250px; gap: 16px;
   margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--border);
 }
-.pg-detail { min-width: 0; }
+.pg-detail { min-width: 0; height: 400px; overflow-y: auto; padding-right: 4px; }
 .pg-list {
   display: flex; flex-direction: column; gap: 8px;
-  overflow-y: auto; max-height: 320px; padding: 2px;
+  overflow-y: auto; max-height: 400px; padding: 2px;
 }
 .chip {
   width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
@@ -256,9 +290,10 @@ const lvlColor = (l: string) => (l === "high" ? "#1ed793" : l === "low" ? "#ff6b
 .chip.active { border-color: var(--accent); background: #1e1b3a; }
 .chip-range { font-size: 11px; color: var(--muted); }
 .chip-label { font-size: 12px; font-weight: 600; }
+.chip-song { font-size: 11px; color: #ffb454; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 760px) {
   .pg-body { grid-template-columns: 1fr; }
-  .pg-detail { order: 2; }
+  .pg-detail { order: 2; height: auto; overflow: visible; }
   .pg-list { order: 1; flex-direction: row; max-height: none; overflow-x: auto; overflow-y: visible; padding: 2px 2px 6px; }
   .chip { flex: 0 0 auto; min-width: 130px; }
 }
@@ -268,6 +303,14 @@ const lvlColor = (l: string) => (l === "high" ? "#1ed793" : l === "low" ? "#ff6b
 .p-range { font-size: 12px; margin-top: 2px; }
 .p-levels { display: flex; gap: 12px; font-size: 12px; }
 .lvl { text-transform: capitalize; }
+.songbox { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 10px 14px; min-height: 86px; background: rgba(255,180,84,0.08); border: 1px solid rgba(255,180,84,0.25); border-radius: 10px; }
+.song-ic { font-size: 22px; color: #ffb454; flex: none; }
+.song-meta { display: flex; flex-direction: column; min-width: 0; }
+.song-k { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: #ffb454; }
+.song-name { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.song-artist { font-size: 12px; }
+.opener { font-size: 11px; margin-top: 5px; line-height: 1.4; }
+.opener b { color: #ffb454; font-weight: 600; }
 .p-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 14px; }
 @media (max-width: 860px) { .p-grid { grid-template-columns: 1fr; } }
 .p-sub { font-size: 11px; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); margin-bottom: 8px; }

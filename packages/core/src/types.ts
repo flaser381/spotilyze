@@ -77,11 +77,12 @@ export interface Phase {
   spread: AVD;
   topGenres: { name: string; share: number }[];
   topArtists: { name: string; plays: number }[];
-  topTracks: { name: string; plays: number }[];
+  topTracks: { name: string; artist: string; plays: number }[]; // overall most-played in the phase; [0] = "song of the phase"
   levels: { volume: Level; replay: Level; diversity: Level };
   label: string;
   changeFromPrev: { signal: string; delta: number }[];
   resolvedShare: number; // fraction of phase plays with a known genre (rest = untagged artists)
+  entrySong: { name: string; artist: string; plays: number } | null; // most-played track in the phase's first 2 weeks — the song that opened the phase
 }
 export type Level = "low" | "mid" | "high";
 
