@@ -1,4 +1,5 @@
 import { podcastBrief, type PodcastProfile } from "./podcasts";
+import { signatureBrief } from "./signature";
 import type { AnalysisResult } from "./types";
 import type { ReportData } from "./reportdata";
 
@@ -118,8 +119,8 @@ export function buildLLMReport(
   p("### How to read this data");
   p("- **AVD = Arousal · Valence · Depth**, measured from the actual recordings (Spotify energy & valence + a derived depth/sophistication axis), nearly all tracks resolved. It's the **sonic profile** — use it as such.");
   p("- **Important — valence ≠ emotion:** valence measures the musical brightness/groove of the SOUND, not lyrical or emotional content. Blues, oldschool hip-hop and many heartbreak songs score HIGH valence because they groove. Never read low valence as \"sad person\" — judge emotion from genres, lyrics, obsessions and the arc; use AVD for sonic character only. (Don't synthesize a single \"mood\" from it.)");
-  p("- **Re-interpret the raw timelines yourself.** The **year-by-year evolution** and **monthly genres+mood** show the actual arc. Watch: **newly emerging genres** (a genre durably entering the rotation = a new context — friends, scene, place, relationship, mood); **obsessions** (short intense binges = emotional anchors / specific moments); **outgrown** music (what they left behind = identity shifts / growth).");
-  p("- **When-you-listen** (per-year heatmaps) reveals lifestyle & chronotype: night-owl vs early riser, weekday-structured (school / 9-5) vs irregular, weekend-heavy.");
+  p("- **Re-interpret the raw timelines yourself.** The **year-by-year evolution** shows the actual arc. Watch: **newly emerging genres** (a genre durably entering the rotation = a new context — friends, scene, place, relationship, mood); **obsessions** (short intense binges = emotional anchors / specific moments); **outgrown** music (what they left behind = identity shifts / growth).");
+  p("- **The per-year lifestyle line** reveals chronotype: night-owl vs early riser, weekday-structured (school / 9-5) vs irregular, weekend-heavy.");
   p("- Don't just restate the auto-detected \"periods\" — they're only a starting point.");
   p("- Reason from the data + your own knowledge of what these specific artists, scenes and lyrics represent. Be concrete, cite specifics, state your confidence.");
   p("- **Do NOT invent facts about a specific podcast, show, artist or track you don't actually recognize.** If a name is unfamiliar, infer ONLY from its title, language and genre, and say you're inferring — never assert what an unknown show is \"about\" or fabricate its topic/host/setting. A wrong confident claim about a top item poisons the whole read. (Note: high podcast hours are often comedy/entertainment background-listening, not study.)");
@@ -127,6 +128,17 @@ export function buildLLMReport(
     "- **Be honest, not diplomatic** — in both directions. Don't sanitize, flatter, or default to the artist's PR reading; but don't overclaim links the data can't support. People are drawn to music for unflattering reasons as readily as admirable ones.",
   );
   p();
+  if (rd?.signature) {
+    const brief = signatureBrief(rd.signature);
+    if (brief) {
+      p("---");
+      p("## Signature — your strongest, pre-computed tells");
+      p("Deterministic patterns mined straight from the raw plays (not guesses, not our crude AVD). These are the highest-signal anchors for who this person is — **lead your read with them**, then corroborate against the fuller data below. Each is specific and dated for a reason: use the specifics.");
+      p();
+      p(brief);
+      p();
+    }
+  }
   p("---");
   p("## Neutral data");
   p();
@@ -148,25 +160,11 @@ export function buildLLMReport(
   if (rd) {
     if (rd.yearly.length) {
       p("### Year-by-year evolution (the arc — read the trajectory of mood, taste & lifestyle)");
-      const DW = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
       for (const y of rd.yearly) {
         const a = y.avd;
         p();
         p(`**${y.year}** — ${y.plays.toLocaleString()} plays, ${y.hours}h${a ? ` · AVD A${a.a.toFixed(2)}/V${a.v.toFixed(2)}/D${a.d.toFixed(2)}` : ""} · ${y.peak}`);
         p(`- top genres: ${y.topGenres.map((g) => `${g.name} ${Math.round(g.share * 100)}%`).join(", ") || "—"}`);
-        if (!opts.compact) {
-          p("- when you listened (rows Mon→Sun · cols 0,3,6,9,12,15,18,21h · 0–9 intensity):");
-          const max = Math.max(1, ...y.heatmap.flat());
-          y.heatmap.forEach((row, wd) => p(`    ${DW[wd]} ${row.map((c) => Math.min(9, Math.round((c / max) * 9))).join("")}`));
-        }
-      }
-      p();
-    }
-    if (!opts.compact && rd.monthlyGenres.length) {
-      p("### Monthly timeline (top genres + measured AVD each month)");
-      for (const m of rd.monthlyGenres) {
-        const a = m.avd;
-        p(`- ${m.month}: ${m.top.map((t) => `${t.name} ${Math.round(t.share * 100)}%`).join(", ")}${a ? `  · AVD ${a.a.toFixed(2)}/${a.v.toFixed(2)}/${a.d.toFixed(2)}` : ""}`);
       }
       p();
     }
@@ -212,6 +210,8 @@ export function buildLLMReport(
     p(`- Sound-profile (AVD): A${ph.centroid.a.toFixed(2)}/V${ph.centroid.v.toFixed(2)}/D${ph.centroid.d.toFixed(2)}`);
     p(`- Top genres: ${ph.topGenres.slice(0, 5).map((x) => x.name).join(", ") || "—"}`);
     p(`- Top artists: ${ph.topArtists.slice(0, 5).map((x) => x.name).join(", ") || "—"}`);
+    if (ph.entrySong) p(`- Opened with (heavy in the first 2 weeks — the song that ushered the phase in): “${ph.entrySong.name}” — ${ph.entrySong.artist} (${ph.entrySong.plays}×)`);
+    if (ph.topTracks[0]) p(`- Defining track (most-played across the phase): “${ph.topTracks[0].name}” — ${ph.topTracks[0].artist} (${ph.topTracks[0].plays}×)`);
     p(`- Listening volume: ${ph.levels.volume} · repeat: ${ph.levels.replay} · genre diversity: ${ph.levels.diversity}`);
   });
   p();

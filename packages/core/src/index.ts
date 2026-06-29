@@ -9,6 +9,7 @@ export * from "./metrics";
 export * from "./changepoint";
 export * from "./lifephases";
 export * from "./reportdata";
+export * from "./signature";
 export * from "./insights";
 export * from "./podcasts";
 export * from "./compat";

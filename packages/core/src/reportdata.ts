@@ -1,6 +1,7 @@
 import { playAVD } from "./avd";
 import { groupTracks, obsessions, outgrownEntries, type Obsession, type Outgrown } from "./insights";
 import type { SkipEvent } from "./parse";
+import { listenerSignature, type ListenerSignature } from "./signature";
 import type { ArtistGenreMap, AVD, GenreAVDTable, Phase, Play } from "./types";
 
 export interface MonthlyGenres {
@@ -32,6 +33,7 @@ export interface ReportData {
   yearly: YearSummary[];
   obsessions: Obsession[]; // intense binges (all-time)
   outgrown: Outgrown[]; // loved-then-abandoned (all-time; [] without skips)
+  signature: ListenerSignature; // pre-extracted high-confidence "tells" (time-of-day, never-skipped, anchors, relationships)
 }
 
 const monthKey = (ts: number) => {
@@ -169,5 +171,6 @@ export function buildReportData(
     yearly,
     obsessions: obsessions(groupTracks(plays)),
     outgrown: opts.skips ? outgrownEntries(plays, opts.skips, opts.phases ?? []) : [],
+    signature: listenerSignature(plays, amap, table, { skips: opts.skips, phases: opts.phases }),
   };
 }
