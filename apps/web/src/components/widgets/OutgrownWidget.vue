@@ -13,7 +13,7 @@ const bail = (s: number) => (s < 1 ? "<1s" : `${Math.round(s)}s`);
 </script>
 
 <template>
-  <WidgetCard title="Outgrown" span="s6">
+  <WidgetCard title="Outgrown" span="s6" help="Songs you once played a lot but have basically stopped playing now. These are tracks you have moved on from, often skipping them the moment they come on.">
     <p class="cap muted">
       Music you once played to death — now you forward-button it the second it comes on. Acts you've dropped wholesale rank above single songs you've soured on.
     </p>

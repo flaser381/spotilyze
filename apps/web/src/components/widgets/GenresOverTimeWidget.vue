@@ -30,7 +30,7 @@ const option = computed(() => {
 </script>
 
 <template>
-  <WidgetCard title="Genres over time" span="s12">
+  <WidgetCard title="Genres over time" span="s12" help="Shows how much each of your top genres mattered month by month. You can watch a style rise as you get into it and fade as you move on to something else.">
     <VChart :option="option" autoresize style="height: 250px" />
   </WidgetCard>
 </template>

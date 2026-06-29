@@ -12,7 +12,7 @@ const fmtMonth = (m: string) => {
 </script>
 
 <template>
-  <WidgetCard title="Obsessions" span="s6">
+  <WidgetCard title="Obsessions" span="s6" help="Songs you played heavily in a short burst, the ones you had on repeat for a while before easing off.">
     <p class="cap muted">Songs you binged hard in a few weeks, then mostly let go.</p>
     <ul v-if="list.length" class="obs">
       <li v-for="o in list" :key="o.name + o.artist">

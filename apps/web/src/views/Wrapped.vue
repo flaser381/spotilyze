@@ -235,7 +235,7 @@ const axisCol = (d: number) => (Math.abs(d) < 0.015 ? "#8a91a6" : d > 0 ? "#1ed7
       <section v-else class="slide">
         <p class="kicker">that's the surface</p>
         <h1>Ready for the full picture?</h1>
-        <p class="sub">The scrollable life-phase graph, every metric, and the full AI report.</p>
+        <p class="sub">The scrollable listening-phase graph, every metric, and the full AI report.</p>
         <button class="btn explore" @click.stop="explore">Explore the dashboard →</button>
       </section>
     </div>

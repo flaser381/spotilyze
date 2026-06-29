@@ -32,7 +32,7 @@ const stats = computed(() => {
 </script>
 
 <template>
-  <WidgetCard title="Restlessness" span="s3">
+  <WidgetCard title="Restlessness" span="s3" help="This shows how patient you are with a song. Every time a track comes on you either let it finish or you skip it. Restlessness is the share of tracks you skip before they end, and it includes the very quick skips where you bail within the first half minute. The love and hate list calls out artists you play a lot but also skip a lot, which usually means you love a few of their songs and instantly skip the rest.">
     <div v-if="stats.has" class="rl">
       <div class="hero">
         <span class="pct">{{ stats.bailPct.toFixed(0) }}<small>%</small></span>

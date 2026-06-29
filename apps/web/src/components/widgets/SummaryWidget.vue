@@ -10,7 +10,7 @@ const axes = ["a", "v", "d"] as const;
 </script>
 
 <template>
-  <WidgetCard v-if="w" title="Overview" span="s3">
+  <WidgetCard v-if="w" title="Overview" span="s3" help="A quick snapshot of the time range you have selected. It shows how many times you pressed play in total, how many hours that adds up to, how many different artists and tracks you heard, and your average sound profile. Use it to get the big picture before digging into the other cards.">
     <div class="stats">
       <div class="stat"><div class="k">Plays</div><div class="v">{{ fmtNum(w.summary.totalPlays) }}</div></div>
       <div class="stat"><div class="k">Listening</div><div class="v">{{ fmtHours(w.summary.totalHours) }}</div></div>

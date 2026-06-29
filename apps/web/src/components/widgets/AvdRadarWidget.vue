@@ -37,7 +37,7 @@ const option = computed(() => {
 </script>
 
 <template>
-  <WidgetCard title="Sound profile" span="s3">
+  <WidgetCard title="Sound profile" span="s3" help="Every track is scored on three qualities. Arousal is how energetic it sounds, from calm and gentle up to loud and intense. Valence is how bright it sounds, from dark and heavy up to light and cheerful, and this is about the sound itself, not your own feelings. Depth is how complex it is, from simple and danceable up to layered and sophisticated. The shape shown here is your average across the selected time range, worked out from the genres you play.">
     <VChart :option="option" autoresize style="height: 230px" />
   </WidgetCard>
 </template>

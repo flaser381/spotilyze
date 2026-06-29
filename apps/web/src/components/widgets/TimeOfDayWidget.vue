@@ -37,7 +37,7 @@ const option = computed(() => {
 </script>
 
 <template>
-  <WidgetCard title="When you listen" span="s3">
+  <WidgetCard title="When you listen" span="s3" help="A grid of your listening across the week. Each square is one hour of one weekday, and brighter squares mean you play more music at that time. Use it to spot your mornings, late nights, and weekend habits at a glance.">
     <VChart :option="option" autoresize class="chart" />
   </WidgetCard>
 </template>

@@ -19,7 +19,7 @@ const stats = computed(() => {
 </script>
 
 <template>
-  <WidgetCard title="Taste stability" span="s3">
+  <WidgetCard title="Taste stability" span="s3" help="This measures how much your favourite artists stay the same from one week to the next. A high number means you keep returning to the same artists, so your taste is steady. A low number, or a sudden dip, means you were exploring new artists or your taste was shifting during that time.">
     <div class="ts">
       <div class="hero">
         <span class="pct">{{ stats.stability.toFixed(0) }}<small>%</small></span>

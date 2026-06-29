@@ -204,7 +204,7 @@ export function buildLLMReport(
     });
     p();
   }
-  p("### Listening periods (stretches where behaviour shifted — candidate life-phases)");
+  p("### Listening periods (stretches where behaviour shifted — candidate listening phases)");
   p("Neutral framing — dates + what dominated each stretch. Interpret transitions as possible life events.");
   phases.forEach((ph, i) => {
     p();

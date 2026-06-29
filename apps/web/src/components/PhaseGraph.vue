@@ -3,9 +3,11 @@ import { computed, ref, watch } from "vue";
 import VChart from "vue-echarts";
 import { useAnalysis } from "../stores/analysis";
 import { AVD, axisStyle, fmtMonth, grid, tooltip, zoom } from "../theme";
+import HelpModal from "./HelpModal.vue";
 
 const store = useAnalysis();
 const selected = ref<number | null>(null);
+const showHelp = ref(false);
 
 // which signal lines are shown — default AVD; persisted across phase selections,
 // kept in sync with the user's legend clicks via the legendselectchanged event.
@@ -162,7 +164,10 @@ const lvlColor = (l: string) => (l === "high" ? "#1ed793" : l === "low" ? "#ff6b
 <template>
   <section class="card s12 pg">
     <div class="pg-head">
-      <h3>AVD &amp; behaviour — life-phases</h3>
+      <div class="pg-title">
+        <h3>AVD &amp; behaviour · listening phases</h3>
+        <button class="help-btn" aria-label="What is this?" @click="showHelp = true">?</button>
+      </div>
       <div class="sens">
         <span class="muted">more</span>
         <input type="range" min="1.2" max="3.2" step="0.1" :value="store.k" @input="onSens" />
@@ -170,6 +175,12 @@ const lvlColor = (l: string) => (l === "high" ? "#1ed793" : l === "low" ? "#ff6b
         <span class="cnt">{{ store.phases.length }} phases <span v-if="store.phasesLoading" class="spin" /></span>
       </div>
     </div>
+    <HelpModal
+      :open="showHelp"
+      title="Listening phases"
+      text="The app looks for stretches of time where your listening changed direction and calls each one a listening phase. These shifts often line up with real changes in your life, like a move, a breakup, a new job, or a new group of friends. The shaded bands are the phases and the dashed red lines mark the weeks where something changed. Drag the slider to split your history into more or fewer phases. Click any phase to see its sound profile, its top genres and artists, what changed at its start, and the songs tied to it."
+      @close="showHelp = false"
+    />
     <VChart
       :option="option"
       :update-options="{ replaceMerge: ['series'] }"
@@ -240,7 +251,7 @@ const lvlColor = (l: string) => (l === "high" ? "#1ed793" : l === "low" ? "#ff6b
             </div>
           </div>
         </div>
-        <p v-else class="muted hint">Shaded bands = detected life-phases · dashed red = change-points (opacity ∝ confidence) · click a phase for details. Toggle legend lines to overlay mood (Valence, Arousal, Depth) and behaviour (Volume, Replay, Diversity) — detection runs on mood + diversity.</p>
+        <p v-else class="muted hint">Shaded bands = detected listening phases · dashed red = change-points (opacity ∝ confidence) · click a phase for details. Toggle legend lines to overlay mood (Valence, Arousal, Depth) and behaviour (Volume, Replay, Diversity) — detection runs on mood + diversity.</p>
       </div>
 
       <div class="pg-list">
@@ -263,6 +274,14 @@ const lvlColor = (l: string) => (l === "high" ? "#1ed793" : l === "low" ? "#ff6b
 <style scoped>
 .pg { gap: 8px; }
 .pg-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.pg-title { display: flex; align-items: center; gap: 8px; }
+.help-btn {
+  flex: none; width: 18px; height: 18px; border-radius: 50%;
+  border: 1px solid var(--border); background: transparent; color: var(--muted);
+  font-size: 11px; font-weight: 700; line-height: 1; cursor: pointer; padding: 0;
+  transition: color .15s, border-color .15s;
+}
+.help-btn:hover { color: var(--accent); border-color: var(--accent); }
 .sens { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-wrap: wrap; }
 .sens input { width: 130px; accent-color: var(--accent); max-width: 38vw; }
 .sens .cnt { color: var(--text); min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; }

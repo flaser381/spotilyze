@@ -27,7 +27,7 @@ const option = computed(() => {
 </script>
 
 <template>
-  <WidgetCard title="Top genres" span="s3">
+  <WidgetCard title="Top genres" span="s3" help="The styles of music you play the most, shown as a percentage of everything you listened to in the selected time range. Longer bars mean a bigger slice of your listening. Genres come from community tags for each artist, so very obscure artists may be left out.">
     <VChart :option="option" autoresize class="chart" />
   </WidgetCard>
 </template>

@@ -12,7 +12,7 @@ const fmtMonth = (ts: number) => new Date(ts).toLocaleDateString("en", { month: 
 </script>
 
 <template>
-  <WidgetCard title="Podcasts &amp; spoken-word" span="s6">
+  <WidgetCard title="Podcasts &amp; spoken word" span="s6" help="Your spoken word listening, kept separate from music. It shows your top shows, how many hours you spent, and how that changed from year to year.">
     <div class="head">
       <p class="cap muted">
         {{ p?.totalHours }}h across {{ p?.nShows }} shows. The highest-signal slice of your history — interests, profession, headspace.

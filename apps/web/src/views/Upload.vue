@@ -25,7 +25,7 @@ function onDrop(e: DragEvent) {
     <div class="brand">
       <div class="logo">◈</div>
       <h1>Spotilyze</h1>
-      <p class="muted tag">Your sound, over time — AVD profile &amp; life-phase detection from your Spotify history.</p>
+      <p class="muted tag">Your sound, over time — AVD profile &amp; listening-phase detection from your Spotify history.</p>
     </div>
 
     <div

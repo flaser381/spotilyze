@@ -33,7 +33,7 @@ const option = computed(() => {
 </script>
 
 <template>
-  <WidgetCard title="Seasonality — valence by month" span="s4">
+  <WidgetCard title="Seasonality · valence by month" span="s4" help="Your average mood for each calendar month, so you can see whether your music tends to get brighter in summer or heavier in winter.">
     <VChart :option="option" autoresize style="height: 230px" />
   </WidgetCard>
 </template>

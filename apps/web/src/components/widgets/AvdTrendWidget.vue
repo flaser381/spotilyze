@@ -28,7 +28,7 @@ const option = computed(() => ({
 </script>
 
 <template>
-  <WidgetCard title="AVD over time — life-phase preview" span="s6">
+  <WidgetCard title="AVD over time · listening phase preview" span="s6" help="Your sound profile, made of Arousal, Valence and Depth, drifting over time. It is a preview of how the listening phases below are detected.">
     <VChart :option="option" autoresize style="height: 240px" />
   </WidgetCard>
 </template>

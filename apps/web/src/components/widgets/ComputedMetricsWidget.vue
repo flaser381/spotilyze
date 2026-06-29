@@ -129,7 +129,7 @@ const option = computed(() => {
 </script>
 
 <template>
-  <WidgetCard title="Computed metrics" span="s12">
+  <WidgetCard title="Computed metrics" span="s12" help="Three numbers tracked over time on one chart. Mood is how bright your music sounds. Taste stability is how steady your favourite artists are. Restlessness is how often you skip songs. Scroll or drag on the chart to zoom in, and it will show finer detail right down to single days. It follows the time range you picked above.">
     <div class="mg">
       <p class="cap muted">
         <strong style="color: #ffb454">Mood</strong> = {{ formula }} (higher = brighter) ·

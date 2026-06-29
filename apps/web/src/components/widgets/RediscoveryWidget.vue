@@ -9,7 +9,7 @@ const fmtYear = (ts: number) => new Date(ts).getFullYear();
 </script>
 
 <template>
-  <WidgetCard title="Rediscoveries" span="s6">
+  <WidgetCard title="Rediscoveries" span="s6" help="Songs you stopped playing for a long time and then came back to later, sometimes after years away.">
     <p class="cap muted">Songs that vanished for years, then came back into rotation.</p>
     <ul v-if="list.length" class="rd">
       <li v-for="r in list" :key="r.name + r.artist">

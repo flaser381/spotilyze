@@ -71,7 +71,7 @@ Spotilyze is built the opposite way to the systems it borrows ideas from.
 </div>
 
 - **AVD sound-profile**: Arousal, Valence, and Depth, measured per play and tracked over time.
-- **Life-phase detection**: change-point detection that finds the periods where your listening shifted.
+- **Listening-phase detection**: change-point detection that finds the periods where your listening shifted, which often line up with real life changes like a move, a breakup, or a new crowd.
 - **Interactive dashboard**: timeframe slider, top artists/genres/tracks, time-of-day heatmap, genre evolution, taste stability.
 - **Computed-metrics graph**: mood, taste stability, and restlessness on one zoomable timeline (refines from yearly down to daily as you zoom).
 - **Restlessness & love-hate**: how often you let tracks finish vs bail early (sub-30s quick-skips included), plus the artists you play a lot *and* skip a lot.
@@ -232,13 +232,13 @@ A model server running on your **host** isn't on the container's `localhost`. Tw
 ```
 plays → artists → genres (baked genre tags ship with the app, no key, no live API) → genre×AVD table → per-play AVD
       → weekly signal matrix (AVD, volume, replay, genre-entropy, novelty, …)
-      → sliding-window change-point detection → life-phases (characterized)
+      → sliding-window change-point detection → listening phases (characterized)
 ```
 
 - **AVD** = three musical-attribute dimensions from Greenberg et al. (2016): **Arousal** (gentle↔intense), **Valence** (sonic brightness/groove, *not* emotion), **Depth** (party/danceable↔sophisticated/complex).
 - **Measured AVD**: per-artist Arousal/Valence/Depth from Spotify audio analysis, used for the displayed sound-profile.
-- **Genre → AVD table** (1,837 genres, in `data/spotilyze.sqlite3`): A/V seeded from the **MuSe** dataset, Depth hand-mapped from Greenberg anchors, sub-genres inherit from parents plus modifier words. Used for life-phase detection (smoother week-to-week than measured).
-- **Life-phase detection**: sliding-window divergence on `[arousal, valence, depth, entropy, novelty]` with an adaptive median+k·MAD threshold. Volume and replay are excluded because they measure engagement, not life-change.
+- **Genre → AVD table** (1,837 genres, in `data/spotilyze.sqlite3`): A/V seeded from the **MuSe** dataset, Depth hand-mapped from Greenberg anchors, sub-genres inherit from parents plus modifier words. Used for listening-phase detection (smoother week-to-week than measured).
+- **Listening-phase detection**: sliding-window divergence on `[arousal, valence, depth, entropy, novelty]` with an adaptive median+k·MAD threshold. Volume and replay are excluded because they measure engagement, not life-change.
 - **Restlessness**: from each play's `reason_end` — tracks you let finish (`trackdone`) vs bail on (`fwdbtn`), with sub-30s quick-skips folded in (else a heavy skipper looks patient, since their skips never count as plays). Session-ends (closed app, logout) are excluded. "Love-hate" surfaces artists you finish *and* skip in roughly equal measure — a balanced split, not lopsided rejection (that's just *outgrown*). These fields exist only in the **Extended** export, so this read needs that history.
 
 ---
@@ -279,7 +279,7 @@ flowchart TB
 ```
 packages/core      pure analysis library (parse, genres, AVD, signals, change-points, phases)
 apps/server        Bun HTTP API (upload, analyze, timeframe slices, phase sensitivity) + genre + LLM clients
-apps/web           Vue 3 dashboard (widgets, phase-colored timeframe slider, life-phase graph, onboarding)
+apps/web           Vue 3 dashboard (widgets, phase-colored timeframe slider, listening-phase graph, onboarding)
 data/              spotilyze.sqlite3, the single shipped DB (artist tags, measured AVD, genre AVD)
 ```
 
